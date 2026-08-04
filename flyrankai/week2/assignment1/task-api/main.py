@@ -25,14 +25,20 @@ tasks = [
         "done": True
     }
 ]
+
+
+# Request models
 class TaskCreate(BaseModel):
     title: str
+
 
 class TaskUpdate(BaseModel):
     title: str
     done: bool
+
+
 # Root endpoint
-@app.get("/")
+@app.get("/", summary="API information")
 def root():
     return {
         "name": "Task API",
@@ -40,20 +46,23 @@ def root():
         "endpoints": ["/tasks"]
     }
 
+
 # Health check endpoint
-@app.get("/health")
+@app.get("/health", summary="Health check")
 def health():
     return {
         "status": "ok"
     }
 
+
 # Get all tasks
-@app.get("/tasks")
+@app.get("/tasks", summary="Get all tasks")
 def get_tasks():
     return tasks
 
-# Get a single task by ID
-@app.get("/tasks/{task_id}")
+
+# Get single task
+@app.get("/tasks/{task_id}", summary="Get task by ID")
 def get_task(task_id: int):
     for task in tasks:
         if task["id"] == task_id:
@@ -63,7 +72,14 @@ def get_task(task_id: int):
         status_code=404,
         detail=f"Task {task_id} not found"
     )
-@app.post("/tasks", status_code=status.HTTP_201_CREATED)
+
+
+# Create task
+@app.post(
+    "/tasks",
+    summary="Create a new task",
+    status_code=status.HTTP_201_CREATED
+)
 def create_task(task: TaskCreate):
     if not task.title.strip():
         raise HTTPException(
@@ -78,12 +94,16 @@ def create_task(task: TaskCreate):
     }
 
     tasks.append(new_task)
+
     return new_task
-# Update a task
-@app.put("/tasks/{task_id}")
+
+
+# Update task
+@app.put("/tasks/{task_id}", summary="Update a task")
 def update_task(task_id: int, updated_task: TaskUpdate):
     for task in tasks:
         if task["id"] == task_id:
+
             if not updated_task.title.strip():
                 raise HTTPException(
                     status_code=400,
@@ -92,6 +112,7 @@ def update_task(task_id: int, updated_task: TaskUpdate):
 
             task["title"] = updated_task.title
             task["done"] = updated_task.done
+
             return task
 
     raise HTTPException(
@@ -100,8 +121,12 @@ def update_task(task_id: int, updated_task: TaskUpdate):
     )
 
 
-# Delete a task
-@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+# Delete task
+@app.delete(
+    "/tasks/{task_id}",
+    summary="Delete a task",
+    status_code=status.HTTP_204_NO_CONTENT
+)
 def delete_task(task_id: int):
     for index, task in enumerate(tasks):
         if task["id"] == task_id:
