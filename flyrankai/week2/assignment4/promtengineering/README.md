@@ -655,15 +655,15 @@ The main lesson I learned is that an effective prompt should communicate the tas
 
 # 11. Deliverable Checklist
 
-* [x] Real task selected
-* [x] Naive prompt created
-* [x] Five additional iterations completed
-* [x] Role assignment used
-* [x] Context and motivation used
-* [x] Few-shot examples used
-* [x] Output structure used
-* [x] Step decomposition used
-* [x] Outputs documented
-* [x] Changes and observed differences documented
-* [x] Cross-model comparison included
-* [x] Reusable prompt template created
+- [x] Real task selected
+- [x] Naive prompt created
+- [x] Five additional iterations completed
+- [x] Role assignment used
+- [x] Context and motivation used
+- [x] Few-shot examples used
+- [x] Output structure used
+- [x] Step decomposition used
+- [x] Outputs documented
+- [x] Changes and observed differences documented
+- [x] Cross-model comparison included
+- [x] Reusable prompt template created
