@@ -1,38 +1,41 @@
 # Task API - FlyRank Backend AI Engineering
 
-A simple CRUD API built with **FastAPI** as part of the FlyRank Backend AI Engineering internship assignment.
+A simple CRUD API built with **FastAPI** and **SQLite** as part of the FlyRank Backend AI Engineering internship assignment.
 
 This API manages a to-do task list and supports the four main CRUD operations:
 
-- Create tasks
-- Read tasks
-- Update tasks
-- Delete tasks
+* Create tasks
+* Read tasks
+* Update tasks
+* Delete tasks
 
-The application uses **in-memory storage**, meaning tasks are stored only while the server is running.
+The application uses **SQLite** for persistent data storage. Tasks are stored in `tasks.db` and remain available even after the server is restarted.
 
 ---
 
 ## 🚀 Tech Stack
 
-- Python 3.13
-- FastAPI
-- Uvicorn
-- Pydantic
-- Swagger UI (OpenAPI Documentation)
+* Python 3.13
+* FastAPI
+* Uvicorn
+* Pydantic
+* SQLite
+* Swagger UI (OpenAPI Documentation)
 
 ---
 
 ## 📌 Features
 
-✅ Create new tasks  
-✅ View all tasks  
-✅ View a single task by ID  
-✅ Update existing tasks  
-✅ Delete tasks  
-✅ Input validation  
-✅ Proper HTTP status codes  
-✅ Interactive Swagger documentation  
+✅ Create new tasks
+✅ View all tasks
+✅ View a single task by ID
+✅ Update existing tasks
+✅ Delete tasks
+✅ Input validation
+✅ Proper HTTP status codes
+✅ Persistent data using SQLite
+✅ Automatic database and table creation
+✅ Interactive Swagger documentation
 
 ---
 
@@ -42,13 +45,17 @@ The application uses **in-memory storage**, meaning tasks are stored only while 
 task-api/
 │
 ├── main.py
+├── tasks.db
 ├── requirements.txt
 ├── README.md
 ├── .gitignore
 │
 └── screenshots/
-    └── swagger-ui.png
+    ├── swagger-ui.png
+    └── database-screenshot.png
 ```
+
+> `tasks.db` is automatically created when the application starts if it does not already exist.
 
 ---
 
@@ -72,9 +79,9 @@ cd flyrankai/week2/assignment1/task-api
 py -m venv venv
 ```
 
-## 4. Activate virtual environment
+## 4. Activate the virtual environment
 
-Windows:
+Windows PowerShell:
 
 ```powershell
 .\venv\Scripts\Activate.ps1
@@ -98,13 +105,13 @@ uvicorn main:app --reload
 
 The API will run at:
 
-```
+```text
 http://127.0.0.1:8000
 ```
 
 Swagger UI documentation:
 
-```
+```text
 http://127.0.0.1:8000/docs
 ```
 
@@ -112,15 +119,15 @@ http://127.0.0.1:8000/docs
 
 # 📌 API Endpoints
 
-| Method | Endpoint | Description | Status Code |
-|--------|----------|-------------|-------------|
-| GET | `/` | API information | 200 |
-| GET | `/health` | Health check | 200 |
-| GET | `/tasks` | Get all tasks | 200 |
-| GET | `/tasks/{task_id}` | Get task by ID | 200, 404 |
-| POST | `/tasks` | Create a new task | 201, 400 |
-| PUT | `/tasks/{task_id}` | Update a task | 200, 400, 404 |
-| DELETE | `/tasks/{task_id}` | Delete a task | 204, 404 |
+| Method | Endpoint           | Description       | Status Code   |
+| ------ | ------------------ | ----------------- | ------------- |
+| GET    | `/`                | API information   | 200           |
+| GET    | `/health`          | Health check      | 200           |
+| GET    | `/tasks`           | Get all tasks     | 200           |
+| GET    | `/tasks/{task_id}` | Get task by ID    | 200, 404      |
+| POST   | `/tasks`           | Create a new task | 201, 400      |
+| PUT    | `/tasks/{task_id}` | Update a task     | 200, 400, 404 |
+| DELETE | `/tasks/{task_id}` | Delete a task     | 204, 404      |
 
 ---
 
@@ -133,20 +140,18 @@ http://127.0.0.1:8000/docs
 ```bash
 curl -X POST "http://127.0.0.1:8000/tasks" \
 -H "Content-Type: application/json" \
--d '{"title":"Learn FastAPI"}'
+-d "{\"title\":\"Learn SQL\"}"
 ```
 
 ### Response
 
 ```json
 {
-    "id": 4,
-    "title": "Learn FastAPI",
-    "done": false
+  "id": 4,
+  "title": "Learn SQL",
+  "done": false
 }
 ```
-
----
 
 ## Update Task
 
@@ -154,8 +159,8 @@ curl -X POST "http://127.0.0.1:8000/tasks" \
 
 ```json
 {
-    "title": "Learn Advanced FastAPI",
-    "done": true
+  "title": "Learn SQL and SQLite",
+  "done": true
 }
 ```
 
@@ -163,27 +168,102 @@ curl -X POST "http://127.0.0.1:8000/tasks" \
 
 ```json
 {
-    "id": 1,
-    "title": "Learn Advanced FastAPI",
-    "done": true
+  "id": 4,
+  "title": "Learn SQL and SQLite",
+  "done": true
 }
 ```
-
----
 
 ## Delete Task
 
 ### Request
 
-```
-DELETE /tasks/1
+```text
+DELETE /tasks/4
 ```
 
 ### Response
 
-```
+```text
 204 No Content
 ```
+
+---
+
+# 🗄️ SQLite Database
+
+This project uses **SQLite** instead of in-memory storage.
+
+SQLite was chosen because it:
+
+* Is lightweight and easy to use
+* Requires no separate database server
+* Stores the database in a single file
+* Provides real SQL-based persistent storage
+
+The database is stored in:
+
+```text
+tasks.db
+```
+
+When the application starts:
+
+1. The `tasks.db` file is created automatically if it does not exist.
+2. The `tasks` table is created automatically if it does not exist.
+3. Three example tasks are inserted only when the table is empty.
+
+The database schema is:
+
+| Column  | Type    | Description       |
+| ------- | ------- | ----------------- |
+| `id`    | INTEGER | Primary key       |
+| `title` | TEXT    | Task title        |
+| `done`  | BOOLEAN | Completion status |
+
+---
+
+# 🔍 SQL Queries Explored
+
+The following SQL queries were executed using **DB Browser for SQLite**:
+
+### List every task
+
+```sql
+SELECT * FROM tasks;
+```
+
+### Show completed tasks
+
+```sql
+SELECT * FROM tasks WHERE done = 1;
+```
+
+### Count all tasks
+
+```sql
+SELECT COUNT(*) FROM tasks;
+```
+
+### Mark every task as completed
+
+```sql
+UPDATE tasks SET done = 1;
+```
+
+### Delete all completed tasks
+
+```sql
+DELETE FROM tasks WHERE done = 1;
+```
+
+---
+
+# 📸 Database Screenshot
+
+The SQLite database was inspected using DB Browser for SQLite.
+
+![SQLite Database](screenshots/database-screenshot.png)
 
 ---
 
@@ -191,73 +271,41 @@ DELETE /tasks/1
 
 The API provides interactive documentation using Swagger UI.
 
-Swagger allows testing all CRUD operations directly from the browser.
+Swagger UI can be used to test all CRUD operations directly from the browser.
 
 ![Swagger UI](screenshots/swagger-ui.png)
 
 ---
-## SQLite Queries Explored
 
-The following SQL queries were executed using DB Browser for SQLite:
+# 🔄 Data Persistence
 
-```sql
-SELECT * FROM tasks;
-
-SELECT * FROM tasks WHERE done = 1;
-
-SELECT COUNT(*) FROM tasks;
-
-UPDATE tasks SET done = 1;
-
-DELETE FROM tasks WHERE done = 1;
-# 📝 Notes
-
-- This project uses in-memory storage.
-- Data will reset when the server restarts.
-- No database is used as required by the assignment.
-- Swagger documentation is automatically generated by FastAPI.
-
----
-## Why SQLite?
-
-SQLite was chosen because it is lightweight, easy to use, requires no separate database server, and stores the entire database in a single file. It is suitable for this project while still providing real SQL-based data persistence.
-## Database
-
-The SQLite database is stored in:
-
-`tasks.db`
-
-The database file and `tasks` table are created automatically when the application starts if they do not already exist.
-## How to Run
-
-### 1. Create and activate the virtual environment
-
-```bash
-python -m venv venv
-
-### 4. Add your database screenshot
-
-Put the screenshot you took from DB Browser for SQLite inside your project folder.
+Unlike the previous in-memory implementation, this version stores tasks in SQLite.
 
 For example:
 
-```text
-task-api/
-├── main.py
-├── tasks.db
-├── README.md
-└── database-screenshot.png
-## Database Screenshot
+1. Create a new task using `POST /tasks`.
+2. Stop the FastAPI server.
+3. Start the server again.
+4. Run `GET /tasks`.
 
-![SQLite Database](database-screenshot.png)
-## Example SQL Query
+The task remains available because it is stored in `tasks.db`.
 
-```sql
-SELECT * FROM tasks WHERE done = 1;
+---
+
+# 📝 Notes
+
+* The API maintains the same CRUD endpoints as the previous assignment.
+* SQLite is used as the persistent data layer.
+* The database and table are created automatically.
+* Example tasks are inserted only during the first initialization.
+* SQL operations are performed using Python's built-in `sqlite3` module.
+* FastAPI automatically generates the Swagger/OpenAPI documentation.
+
+---
 
 # 👩‍💻 Author
 
 **Thillai Eswari T**
 
-Backend AI Engineering Intern  
+Backend AI Engineering Intern
 FlyRank
