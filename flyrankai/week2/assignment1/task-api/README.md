@@ -196,7 +196,20 @@ Swagger allows testing all CRUD operations directly from the browser.
 ![Swagger UI](screenshots/swagger-ui.png)
 
 ---
+## SQLite Queries Explored
 
+The following SQL queries were executed using DB Browser for SQLite:
+
+```sql
+SELECT * FROM tasks;
+
+SELECT * FROM tasks WHERE done = 1;
+
+SELECT COUNT(*) FROM tasks;
+
+UPDATE tasks SET done = 1;
+
+DELETE FROM tasks WHERE done = 1;
 # 📝 Notes
 
 - This project uses in-memory storage.
