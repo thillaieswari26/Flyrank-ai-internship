@@ -1,6 +1,10 @@
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
-import sqlite3
+from dotenv import load_dotenv
+
+from service import TaskService
+
+load_dotenv()
 
 app = FastAPI(
     title="Task API",
@@ -8,52 +12,7 @@ app = FastAPI(
     version="1.0"
 )
 
-DATABASE = "tasks.db"
-
-
-# -------------------------
-# Database setup
-# -------------------------
-
-def get_connection():
-    connection = sqlite3.connect(DATABASE)
-    connection.row_factory = sqlite3.Row
-    return connection
-
-
-def initialize_database():
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    # Create tasks table if it doesn't exist
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            done BOOLEAN NOT NULL DEFAULT 0
-        )
-    """)
-
-    # Insert example tasks only if the table is empty
-    cursor.execute("SELECT COUNT(*) FROM tasks")
-    count = cursor.fetchone()[0]
-
-    if count == 0:
-        cursor.executemany(
-            "INSERT INTO tasks (title, done) VALUES (?, ?)",
-            [
-                ("Learn FastAPI", 0),
-                ("Build CRUD API", 0),
-                ("Push to GitHub", 1)
-            ]
-        )
-
-    connection.commit()
-    connection.close()
-
-
-# Initialize database when application starts
-initialize_database()
+service = TaskService()
 
 
 # -------------------------
@@ -99,22 +58,7 @@ def health():
 
 @app.get("/tasks", summary="Get all tasks")
 def get_tasks():
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("SELECT id, title, done FROM tasks ORDER BY id")
-    rows = cursor.fetchall()
-
-    connection.close()
-
-    return [
-        {
-            "id": row["id"],
-            "title": row["title"],
-            "done": bool(row["done"])
-        }
-        for row in rows
-    ]
+    return service.get_tasks()
 
 
 # -------------------------
@@ -123,28 +67,15 @@ def get_tasks():
 
 @app.get("/tasks/{task_id}", summary="Get task by ID")
 def get_task(task_id: int):
-    connection = get_connection()
-    cursor = connection.cursor()
+    task = service.get_task(task_id)
 
-    cursor.execute(
-        "SELECT id, title, done FROM tasks WHERE id = ?",
-        (task_id,)
-    )
-
-    row = cursor.fetchone()
-    connection.close()
-
-    if row is None:
+    if task is None:
         raise HTTPException(
             status_code=404,
             detail=f"Task {task_id} not found"
         )
 
-    return {
-        "id": row["id"],
-        "title": row["title"],
-        "done": bool(row["done"])
-    }
+    return task
 
 
 # -------------------------
@@ -164,24 +95,7 @@ def create_task(task: TaskCreate):
             detail="Title cannot be empty"
         )
 
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute(
-        "INSERT INTO tasks (title, done) VALUES (?, ?)",
-        (task.title, 0)
-    )
-
-    task_id = cursor.lastrowid
-
-    connection.commit()
-    connection.close()
-
-    return {
-        "id": task_id,
-        "title": task.title,
-        "done": False
-    }
+    return service.create_task(task.title)
 
 
 # -------------------------
@@ -197,47 +111,19 @@ def update_task(task_id: int, updated_task: TaskUpdate):
             detail="Title cannot be empty"
         )
 
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    # Check whether task exists
-    cursor.execute(
-        "SELECT id FROM tasks WHERE id = ?",
-        (task_id,)
+    task = service.update_task(
+        task_id,
+        updated_task.title,
+        updated_task.done
     )
 
-    row = cursor.fetchone()
-
-    if row is None:
-        connection.close()
-
+    if task is None:
         raise HTTPException(
             status_code=404,
             detail=f"Task {task_id} not found"
         )
 
-    # Update task
-    cursor.execute(
-        """
-        UPDATE tasks
-        SET title = ?, done = ?
-        WHERE id = ?
-        """,
-        (
-            updated_task.title,
-            int(updated_task.done),
-            task_id
-        )
-    )
-
-    connection.commit()
-    connection.close()
-
-    return {
-        "id": task_id,
-        "title": updated_task.title,
-        "done": updated_task.done
-    }
+    return task
 
 
 # -------------------------
@@ -251,31 +137,12 @@ def update_task(task_id: int, updated_task: TaskUpdate):
 )
 def delete_task(task_id: int):
 
-    connection = get_connection()
-    cursor = connection.cursor()
+    deleted = service.delete_task(task_id)
 
-    # Check whether task exists
-    cursor.execute(
-        "SELECT id FROM tasks WHERE id = ?",
-        (task_id,)
-    )
-
-    row = cursor.fetchone()
-
-    if row is None:
-        connection.close()
-
+    if not deleted:
         raise HTTPException(
             status_code=404,
             detail=f"Task {task_id} not found"
         )
-
-    cursor.execute(
-        "DELETE FROM tasks WHERE id = ?",
-        (task_id,)
-    )
-
-    connection.commit()
-    connection.close()
 
     return
