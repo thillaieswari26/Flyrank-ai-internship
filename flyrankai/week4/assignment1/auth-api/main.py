@@ -1,5 +1,6 @@
 import os
-
+from fastapi import FastAPI, HTTPException, Header
+from jose import jwt
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -84,4 +85,36 @@ def login(request: AuthRequest):
         raise HTTPException(
             status_code=401,
             detail=str(e)
+        )
+@app.get("/protected/me")
+def protected_me(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header missing"
+        )
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header"
+        )
+
+    token = authorization.split(" ")[1]
+
+    try:
+        payload = jwt.decode(
+            token,
+            options={"verify_signature": False}
+        )
+
+        return {
+            "message": "Protected route accessed",
+            "user": payload
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
         )
