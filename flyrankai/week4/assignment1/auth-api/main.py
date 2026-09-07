@@ -1,6 +1,5 @@
 import os
-
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -87,8 +86,7 @@ def login(request: AuthRequest):
             status_code=401,
             detail=str(e)
         )
-@app.get("/protected/me")
-def protected_me(authorization: str = Header(None)):
+def get_current_user(authorization: str = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=401,
@@ -105,13 +103,28 @@ def protected_me(authorization: str = Header(None)):
             options={"verify_aud": False}
         )
 
-        return {
-            "message": "Protected route accessed",
-            "user": payload
-        }
+        return payload
 
     except Exception:
         raise HTTPException(
             status_code=401,
             detail="Invalid or expired token"
+        )
+@app.get("/protected/me")
+def protected_me(current_user: dict = Depends(get_current_user)):
+    return {
+        "message": "Protected route accessed",
+        "user": current_user
+    }
+@app.post("/auth/logout")
+def logout():
+    try:
+        supabase.auth.sign_out()
+        return {
+            "message": "Logout successful"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
         )
