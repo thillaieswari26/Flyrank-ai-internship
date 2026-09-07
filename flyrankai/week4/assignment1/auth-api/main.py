@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -17,8 +18,7 @@ app = FastAPI(
     title="FlyRank Auth API",
     version="1.0.0"
 )
-
-
+security = HTTPBearer()
 class AuthRequest(BaseModel):
     email: str
     password: str
@@ -86,14 +86,10 @@ def login(request: AuthRequest):
             status_code=401,
             detail=str(e)
         )
-def get_current_user(authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authorization header"
-        )
-
-    token = authorization.split(" ", 1)[1]
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    token = credentials.credentials
 
     try:
         payload = jwt.decode(
