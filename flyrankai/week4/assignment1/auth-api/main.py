@@ -1,15 +1,16 @@
 import os
+
 from fastapi import FastAPI, HTTPException, Header
-from jose import jwt
-from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from jose import jwt
 
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -88,24 +89,20 @@ def login(request: AuthRequest):
         )
 @app.get("/protected/me")
 def protected_me(authorization: str = Header(None)):
-    if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail="Authorization header missing"
-        )
-
-    if not authorization.startswith("Bearer "):
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=401,
             detail="Invalid authorization header"
         )
 
-    token = authorization.split(" ")[1]
+    token = authorization.split(" ", 1)[1]
 
     try:
         payload = jwt.decode(
             token,
-            options={"verify_signature": False}
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            options={"verify_aud": False}
         )
 
         return {
@@ -116,5 +113,5 @@ def protected_me(authorization: str = Header(None)):
     except Exception:
         raise HTTPException(
             status_code=401,
-            detail="Invalid token"
+            detail="Invalid or expired token"
         )
