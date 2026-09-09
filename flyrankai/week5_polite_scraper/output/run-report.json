@@ -1,0 +1,19 @@
+{
+  "start_time": "2026-09-09T16:04:02.131234+00:00",
+  "pages_fetched": 2,
+  "real_requests": 2,
+  "cache_hits": 63,
+  "catalogue_pages": 3,
+  "discovered": 60,
+  "unique_urls": 60,
+  "valid_records": 60,
+  "invalid_records": 0,
+  "failed_pages": [
+    {
+      "url": "https://books.toscrape.com/this-page-does-not-exist-hopefully/",
+      "error": "HTTP 404",
+      "reason": "deliberately broken test URL"
+    }
+  ],
+  "robots_status": 404
+}
